@@ -4,8 +4,8 @@ from pydantic import AliasPath, BaseModel, Field, field_validator
 
 
 class Transaction(BaseModel):
-    _id: str
-    _account: str
+    id: str
+    account: str
     date: datetime
     type: str
     amount: float

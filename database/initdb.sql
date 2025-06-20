@@ -8,7 +8,7 @@ CREATE DOMAIN transaction_id AS TEXT CHECK (VALUE ~ '^trans_[a-z0-9]{25}$');
 
 -- Users table
 CREATE TABLE users (
-    _id user_id PRIMARY KEY,
+    id user_id PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     akahu_id VARCHAR(255) UNIQUE,
@@ -19,8 +19,8 @@ CREATE TABLE users (
 
 -- Accounts table
 CREATE TABLE accounts (
-    _id account_id PRIMARY KEY,
-    _user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    id account_id PRIMARY KEY,
+    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     company VARCHAR(255),
     amount DECIMAL(15,2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -29,8 +29,8 @@ CREATE TABLE accounts (
 
 -- Segments table
 CREATE TABLE segments (
-    _id SERIAL PRIMARY KEY,
-    _user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    id SERIAL PRIMARY KEY,
+    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     colour VARCHAR(7),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -40,7 +40,7 @@ CREATE TABLE segments (
 
 -- Models table for ML models
 CREATE TABLE models (
-    _id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     endpoint VARCHAR(255) NOT NULL,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -49,9 +49,9 @@ CREATE TABLE models (
 
 -- Transactions table
 CREATE TABLE transactions (
-    _id transaction_id PRIMARY KEY,
-    _account account_id NOT NULL REFERENCES accounts(_id) ON DELETE CASCADE,
-    _user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    id transaction_id PRIMARY KEY,
+    account account_id NOT NULL REFERENCES accounts(_id) ON DELETE CASCADE,
+    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     hash TEXT,
     date TIMESTAMP WITH TIME ZONE NOT NULL,
     type VARCHAR(255),
@@ -60,7 +60,7 @@ CREATE TABLE transactions (
     category VARCHAR(255),
     group_name VARCHAR(255),
     merchant VARCHAR(255),
-    _segment_id INTEGER REFERENCES segments(_id) ON DELETE SET NULL,
+    segment_id INTEGER REFERENCES segments(_id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -74,18 +74,18 @@ CREATE TABLE embeddings (
 
 -- Assignments table (linking transactions to segments)
 CREATE TABLE assignments (
-    _user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     hash TEXT NOT NULL,
-    _segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
+    segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (_user_id, hash)
 );
 
 -- Classification table for ML predictions
 CREATE TABLE classification (
-    _user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
     hash TEXT NOT NULL,
-    _segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
+    segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
     prediction TEXT,
     confidence DECIMAL(5,4),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -94,7 +94,7 @@ CREATE TABLE classification (
 
 -- Ignored transactions table
 CREATE TABLE ignored (
-    _id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     transaction_id transaction_id NOT NULL REFERENCES transactions(_id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

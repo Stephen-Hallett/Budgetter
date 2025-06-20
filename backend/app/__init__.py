@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .router.accounts import router as AccountRouter
 from .router.transactions import router as TransactionRouter
+from .router.users import router as UserRouter
 from .utils.logger import MyLogger
 
 app = FastAPI()
@@ -19,3 +20,4 @@ logger = MyLogger().get_logger()
 
 app.include_router(AccountRouter, prefix="/accounts")
 app.include_router(TransactionRouter, prefix="/transactions")
+app.include_router(UserRouter, prefix="/users")

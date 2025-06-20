@@ -21,7 +21,7 @@ class Controller:
         ).json()
         return [
             {
-                "_id": account["_id"],
+                "id": account["_id"],
                 "name": account["name"],
                 "company": account["connection"]["name"],
                 "amount": account["balance"]["available"],
