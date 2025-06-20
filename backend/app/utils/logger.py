@@ -3,7 +3,7 @@ import logging
 import time
 from collections.abc import Callable
 
-from .config import settings
+from ..config import settings
 
 # Yoinked straight from https://github.com/Estanz0/CVGenerator/blob/main/backend/app/util.py
 

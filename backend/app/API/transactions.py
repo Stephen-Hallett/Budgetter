@@ -4,10 +4,12 @@ from datetime import datetime
 import pytz
 import requests
 
-from .schemas import Account, Test, Transaction
-from .util import log
+from ..schemas.transactions import Transaction
+from ..utils.logger import MyLogger, log
+from .accounts import Controller as AccountsController
 
-logger = logging.getLogger(__name__)
+logger = MyLogger().get_logger()
+acc_con = AccountsController()
 
 
 class Controller:
@@ -16,27 +18,8 @@ class Controller:
         self.tz = pytz.timezone("Pacific/Auckland")
 
     @log
-    def test(self) -> Test:
-        return {"test": "Dw it's working king"}
-
-    @log
-    def get_accounts(self, headers: dict[str, str]) -> list[Account]:
-        akahu_accounts = requests.get(
-            "https://api.akahu.io/v1/accounts", headers=headers
-        ).json()
-        return [
-            {
-                "_id": account["_id"],
-                "name": account["name"],
-                "company": account["connection"]["name"],
-                "amount": account["balance"]["available"],
-            }
-            for account in akahu_accounts["items"]
-        ]
-
-    @log
     def get_transactions(self, headers: dict[str, str]) -> list[Transaction]:
-        accounts = self.get_accounts(headers)
+        accounts = acc_con.get_accounts(headers)
         all_transactions = []
         for account in accounts:
             account_transactions = requests.get(

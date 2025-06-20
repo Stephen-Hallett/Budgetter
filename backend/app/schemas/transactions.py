@@ -3,17 +3,6 @@ from datetime import datetime
 from pydantic import AliasPath, BaseModel, Field, field_validator
 
 
-class Test(BaseModel):
-    test: str
-
-
-class Account(BaseModel):
-    _id: str
-    name: str
-    company: str
-    amount: float
-
-
 class Transaction(BaseModel):
     _id: str
     _account: str
@@ -41,20 +30,3 @@ class Transaction(BaseModel):
         if isinstance(value, dict):
             return value["name"]
         return value
-
-
-class SpendingSummary(BaseModel):
-    Week: float
-    Month: float
-
-
-class Authorization(BaseModel):
-    X_Akahu_ID: str = Field(alias="X-Akahu-ID")
-    Authorization: str
-
-    class Config:
-        populate_by_name = True
-        allow_population_by_field_name = True
-
-    def model_dump(self, **kwargs: object) -> dict[str, str]:
-        return super().model_dump(by_alias=True, **kwargs)
