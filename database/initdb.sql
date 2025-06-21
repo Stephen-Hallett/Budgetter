@@ -2,25 +2,27 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Create custom types for IDs
-CREATE DOMAIN user_id AS TEXT CHECK (VALUE ~ '^user_[a-z0-9]{25}$');
-CREATE DOMAIN account_id AS TEXT CHECK (VALUE ~ '^acc_[a-z0-9]{25}$');
-CREATE DOMAIN transaction_id AS TEXT CHECK (VALUE ~ '^trans_[a-z0-9]{25}$');
+CREATE DOMAIN user_id_type AS TEXT CHECK (VALUE ~ '^user_[a-z0-9]{25}$');
+CREATE DOMAIN account_id_type AS TEXT CHECK (VALUE ~ '^acc_[a-z0-9]{25}$');
+CREATE DOMAIN transaction_id_type AS TEXT CHECK (VALUE ~ '^trans_[a-z0-9]{25}$');
 
 -- Users table
 CREATE TABLE users (
-    id user_id PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    id user_id_type UNIQUE,
+    name VARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     akahu_id VARCHAR(255) UNIQUE,
     auth_token TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (id, name)
 );
 
 -- Accounts table
 CREATE TABLE accounts (
-    id account_id PRIMARY KEY,
-    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    id account_id_type PRIMARY KEY,
+    user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255),
     company VARCHAR(255),
     amount DECIMAL(15,2) DEFAULT 0.00,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -30,12 +32,12 @@ CREATE TABLE accounts (
 -- Segments table
 CREATE TABLE segments (
     id SERIAL PRIMARY KEY,
-    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     colour VARCHAR(7),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(_user_id, name)
+    UNIQUE(user_id, name)
 );
 
 -- Models table for ML models
@@ -49,9 +51,9 @@ CREATE TABLE models (
 
 -- Transactions table
 CREATE TABLE transactions (
-    id transaction_id PRIMARY KEY,
-    account account_id NOT NULL REFERENCES accounts(_id) ON DELETE CASCADE,
-    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    id transaction_id_type PRIMARY KEY,
+    account account_id_type NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     hash TEXT,
     date TIMESTAMP WITH TIME ZONE NOT NULL,
     type VARCHAR(255),
@@ -60,7 +62,7 @@ CREATE TABLE transactions (
     category VARCHAR(255),
     group_name VARCHAR(255),
     merchant VARCHAR(255),
-    segment_id INTEGER REFERENCES segments(_id) ON DELETE SET NULL,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -74,44 +76,44 @@ CREATE TABLE embeddings (
 
 -- Assignments table (linking transactions to segments)
 CREATE TABLE assignments (
-    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     hash TEXT NOT NULL,
-    segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (_user_id, hash)
+    PRIMARY KEY (user_id, hash)
 );
 
 -- Classification table for ML predictions
 CREATE TABLE classification (
-    user_id user_id NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+    user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     hash TEXT NOT NULL,
-    segment_id INTEGER REFERENCES segments(_id) ON DELETE CASCADE,
+    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
     prediction TEXT,
     confidence DECIMAL(5,4),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (_user_id, hash)
+    PRIMARY KEY (user_id, hash)
 );
 
 -- Ignored transactions table
 CREATE TABLE ignored (
     id SERIAL PRIMARY KEY,
-    transaction_id transaction_id NOT NULL REFERENCES transactions(_id) ON DELETE CASCADE,
+    transaction_id transaction_id_type NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Indexes for performance
-CREATE INDEX idx_transactions_user_id ON transactions(_user_id);
-CREATE INDEX idx_transactions_account ON transactions(_account);
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX idx_transactions_account ON transactions(account);
 CREATE INDEX idx_transactions_date ON transactions(date);
 CREATE INDEX idx_transactions_hash ON transactions(hash);
-CREATE INDEX idx_transactions_segment_id ON transactions(_segment_id);
+CREATE INDEX idx_transactions_segment_id ON transactions(segment_id);
 
-CREATE INDEX idx_accounts_user_id ON accounts(_user_id);
-CREATE INDEX idx_segments_user_id ON segments(_user_id);
-CREATE INDEX idx_assignments_user_id ON assignments(_user_id);
-CREATE INDEX idx_assignments_segment_id ON assignments(_segment_id);
-CREATE INDEX idx_classification_user_id ON classification(_user_id);
-CREATE INDEX idx_classification_segment_id ON classification(_segment_id);
+CREATE INDEX idx_accounts_user_id ON accounts(user_id);
+CREATE INDEX idx_segments_user_id ON segments(user_id);
+CREATE INDEX idx_assignments_user_id ON assignments(user_id);
+CREATE INDEX idx_assignments_segment_id ON assignments(segment_id);
+CREATE INDEX idx_classification_user_id ON classification(user_id);
+CREATE INDEX idx_classification_segment_id ON classification(segment_id);
 
 -- Vector similarity search indexes
 -- HNSW index for fast approximate similarity search

@@ -1,17 +1,18 @@
 from datetime import datetime
 
-from pydantic import AliasPath, BaseModel, Field, field_validator
+from pydantic import AliasChoices, AliasPath, BaseModel, Field, field_validator
 
 
 class Transaction(BaseModel):
-    id: str
-    account: str
+    id: str = Field(validation_alias=AliasChoices("id", "_id"))
+    account: str = Field(validation_alias=AliasChoices("account", "_account"))
+    user_id: str = Field(validation_alias=AliasChoices("user_id", "_user"))
     date: datetime
     type: str
     amount: float
     description: str
     category: str | None = None
-    group: str | None = Field(
+    group_name: str | None = Field(
         validation_alias=AliasPath("category", "groups", "personal_finance", "name"),
         default=None,
     )
@@ -30,3 +31,6 @@ class Transaction(BaseModel):
         if isinstance(value, dict):
             return value["name"]
         return value
+
+    def model_dump(self, **kwargs: object) -> dict[str, str]:
+        return super().model_dump(by_alias=True, **kwargs)

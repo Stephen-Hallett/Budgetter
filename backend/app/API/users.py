@@ -30,3 +30,6 @@ class Controller:
             _ = self.db.create_user(user)  # TODO Add check if user already exists
             return user
         raise ValueError("Those access tokens dont belong to a valid user!")
+
+    def get_user(self, name: str) -> User:
+        return self.db.get_user(name)

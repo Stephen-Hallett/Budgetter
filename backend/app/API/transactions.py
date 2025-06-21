@@ -5,6 +5,8 @@ import pytz
 import requests
 
 from ..schemas.transactions import Transaction
+from ..schemas.users import User
+from ..utils.db import BudgetterDB
 from ..utils.logger import MyLogger, log
 from .accounts import Controller as AccountsController
 
@@ -16,19 +18,28 @@ class Controller:
     def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         self.tz = pytz.timezone("Pacific/Auckland")
+        self.db = BudgetterDB()
 
     @log
-    def get_transactions(self, headers: dict[str, str]) -> list[Transaction]:
-        accounts = acc_con.get_accounts(headers)
-        all_transactions = []
+    def load_transactions(self, user: User) -> None:
+        headers = {
+            "X-Akahu-ID": user.akahu_id,
+            "Authorization": f"Bearer {user.auth_token}",
+        }
+        accounts = acc_con.list_accounts(user)
         for account in accounts:
             account_transactions = requests.get(
-                f"https://api.akahu.io/v1/accounts/{account['_id']}/transactions",
+                f"https://api.akahu.io/v1/accounts/{account.id}/transactions",
                 headers=headers,
+                timeout=5,
             ).json()["items"]
             for transaction in account_transactions:
                 transaction["date"] = datetime.strptime(
                     transaction["date"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 ).replace(tzinfo=self.tz)
-                all_transactions.append(Transaction.model_validate(transaction))
-        return all_transactions
+                self.db.create_transaction(Transaction.model_validate(transaction))
+
+    def list_transactions(
+        self, user: User
+    ) -> list[Transaction]:  # TODO: Add time limit
+        return self.db.list_transactions(user)

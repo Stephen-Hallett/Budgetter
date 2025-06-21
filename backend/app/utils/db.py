@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 import numpy as np
@@ -5,7 +6,9 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from sentence_transformers import SentenceTransformer
 
-from ..schemas.accoutns import Account
+from ..schemas.accounts import Account
+from ..schemas.segments import Segment
+from ..schemas.transactions import Transaction
 from ..schemas.users import User
 
 
@@ -27,11 +30,14 @@ class BudgetterDB:
         }
 
         # Initialize sentence transformer model
-        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+        self.model = SentenceTransformer("all-mpnet-base-v2")
 
     def get_connection(self):
         """Get database connection."""
         return psycopg2.connect(**self.connection_params)
+
+    def create_text_hash(self, text: str) -> str:
+        return hashlib.sha256(text.encode()).hexdigest()
 
     def generate_embedding(self, text: str) -> np.ndarray:
         """Generate embedding for text using sentence transformers."""
@@ -43,24 +49,144 @@ class BudgetterDB:
                 """
                     INSERT INTO users (id, name, email, akahu_id, auth_token)
                     VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (id) DO NOTHING
+                    ON CONFLICT (name) DO NOTHING
                 """,
                 (user.id, user.name, user.email, user.akahu_id, user.auth_token),
             )
             conn.commit()
 
-    def create_account(self, account: Account, user: User) -> None:
-        """Create a new account."""
+    def get_user(self, name: str) -> User:
+        with (
+            self.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """
+                    SELECT * FROM users WHERE name = %s
+                """,
+                (name,),
+            )
+            try:
+                return User.model_validate(next(dict(row) for row in cur.fetchall()))
+            except Exception as e:
+                raise ValueError("A user with that name doesnt exist") from e
+
+    def upsert_account(self, account: Account, user: User) -> None:
+        """Insert or update an account (upsert)."""
         with self.get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
                     INSERT INTO accounts (id, user_id, name, company, amount)
-                    VALUES (%s, %s, %s, %s, %d)
-                    ON CONFLICT (id) DO NOTHING
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        company = EXCLUDED.company,
+                        amount = EXCLUDED.amount
                 """,
                 (account.id, user.id, account.name, account.company, account.amount),
             )
             conn.commit()
+
+    def list_accounts(self, user: User) -> list[Account]:
+        with (
+            self.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """
+                    SELECT * FROM accounts WHERE user_id = %s
+                """,
+                (user.id,),
+            )
+            try:
+                return [Account.model_validate(dict(row)) for row in cur.fetchall()]
+            except Exception as e:
+                raise e
+
+    def create_transaction(self, transaction: Transaction) -> None:
+        """Insert transaction and generate embedding for description."""
+
+        # Generate hash and embedding for description
+        info_string = " ".join(
+            [
+                str(transaction.type),
+                str(transaction.description),
+                str(transaction.category),
+                str(transaction.group_name),
+                str(transaction.merchant),
+            ]
+        )
+        text_hash = self.create_text_hash(info_string)
+        embedding = self.generate_embedding(info_string)
+
+        with self.get_connection() as conn, conn.cursor() as cur:
+            # Insert transaction
+            cur.execute(
+                """
+                    INSERT INTO transactions (id, account, user_id, hash, date, type, amount, 
+                                            description, category, group_name, merchant)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING
+                """,
+                (
+                    transaction.id,
+                    transaction.account,
+                    transaction.user_id,
+                    text_hash,
+                    transaction.date,
+                    transaction.type,
+                    transaction.amount,
+                    transaction.description,
+                    transaction.category,
+                    transaction.group_name,
+                    transaction.merchant,
+                ),
+            )
+
+            # Insert embedding
+            cur.execute(
+                """
+                    INSERT INTO embeddings (hash, embedding)
+                    VALUES (%s, %s)
+                    ON CONFLICT (hash) DO NOTHING
+                """,
+                (text_hash, embedding.tolist()),
+            )
+
+            conn.commit()
+
+        return text_hash
+
+    def list_transactions(self, user: User) -> list[Account]:
+        with (
+            self.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """
+                    SELECT * FROM transactions WHERE user_id = %s
+                """,
+                (user.id,),
+            )
+            try:
+                return [Transaction(**dict(row)) for row in cur.fetchall()]
+            except Exception as e:
+                raise e
+
+    def list_segments(self) -> list[Segment]:
+        with (
+            self.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """
+                    SELECT * FROM segments
+                """
+            )
+            try:
+                return [Segment(**dict(row)) for row in cur.fetchall()]
+            except Exception as e:
+                raise e
 
 
 if __name__ == "__main__":
