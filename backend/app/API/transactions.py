@@ -4,21 +4,22 @@ from datetime import datetime
 import pytz
 import requests
 
+from database.db import BudgetterDB
+
 from ..schemas.transactions import Transaction
 from ..schemas.users import User
-from ..utils.db import BudgetterDB
 from ..utils.logger import MyLogger, log
 from .accounts import Controller as AccountsController
 
-logger = MyLogger().get_logger()
-acc_con = AccountsController()
+logger: logging.Logger = MyLogger().get_logger()
+acc_con: AccountsController = AccountsController()
 
 
 class Controller:
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
-        self.tz = pytz.timezone("Pacific/Auckland")
-        self.db = BudgetterDB()
+        self.logger: logging.Logger = MyLogger().get_logger()
+        self.tz: pytz.BaseTzInfo = pytz.timezone("Pacific/Auckland")
+        self.db: BudgetterDB = BudgetterDB()
 
     @log
     def load_transactions(self, user: User) -> None:

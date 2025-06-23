@@ -1,27 +1,28 @@
 import hashlib
 import os
+from typing import Any
 
 import numpy as np
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from sentence_transformers import SentenceTransformer
 
-from ..schemas.accounts import Account
-from ..schemas.segments import Segment
-from ..schemas.transactions import Transaction
-from ..schemas.users import User
+from backend.app.schemas.accounts import Account
+from backend.app.schemas.segments import Segment
+from backend.app.schemas.transactions import Transaction
+from backend.app.schemas.users import User
 
 
 class BudgetterDB:
     def __init__(
         self,
         host: str = os.environ["POSTGRES_HOST"],
-        port: int = int(os.environ["POSTGRES_PORT"]),
+        port: int = os.environ["POSTGRES_PORT"],
         database: str = os.environ["POSTGRES_DB"],
         user: str = os.environ["POSTGRES_USER"],
         password: str = os.environ["POSTGRES_PW"],
     ) -> None:
-        self.connection_params = {
+        self.connection_params: dict[str, str] = {
             "host": host,
             "port": port,
             "database": database,
@@ -30,18 +31,31 @@ class BudgetterDB:
         }
 
         # Initialize sentence transformer model
-        self.model = SentenceTransformer("all-mpnet-base-v2")
+        self.embedding_model: SentenceTransformer = SentenceTransformer(
+            "all-mpnet-base-v2"
+        )
 
-    def get_connection(self):
+    def get_connection(self) -> Any:  # NOQA
         """Get database connection."""
-        return psycopg2.connect(**self.connection_params)
+        return psycopg2.connect(**self.connection_params)  # pyright: ignore
+
+    def get_info_string(self, transaction: Transaction) -> str:
+        return " ".join(
+            [
+                str(transaction.type),
+                str(transaction.description),
+                str(transaction.category),
+                str(transaction.group_name),
+                str(transaction.merchant),
+            ]
+        )
 
     def create_text_hash(self, text: str) -> str:
         return hashlib.sha256(text.encode()).hexdigest()
 
     def generate_embedding(self, text: str) -> np.ndarray:
         """Generate embedding for text using sentence transformers."""
-        return self.model.encode(text)
+        return self.embedding_model.encode(text)
 
     def create_user(self, user: User) -> None:
         with self.get_connection() as conn, conn.cursor() as cur:
@@ -103,19 +117,11 @@ class BudgetterDB:
             except Exception as e:
                 raise e
 
-    def create_transaction(self, transaction: Transaction) -> None:
+    def create_transaction(self, transaction: Transaction) -> str:
         """Insert transaction and generate embedding for description."""
 
         # Generate hash and embedding for description
-        info_string = " ".join(
-            [
-                str(transaction.type),
-                str(transaction.description),
-                str(transaction.category),
-                str(transaction.group_name),
-                str(transaction.merchant),
-            ]
-        )
+        info_string = self.get_info_string(transaction)
         text_hash = self.create_text_hash(info_string)
         embedding = self.generate_embedding(info_string)
 
@@ -157,7 +163,7 @@ class BudgetterDB:
 
         return text_hash
 
-    def list_transactions(self, user: User) -> list[Account]:
+    def list_transactions(self, user: User) -> list[Transaction]:
         with (
             self.get_connection() as conn,
             conn.cursor(cursor_factory=RealDictCursor) as cur,
@@ -187,6 +193,28 @@ class BudgetterDB:
                 return [Segment(**dict(row)) for row in cur.fetchall()]
             except Exception as e:
                 raise e
+
+    def find_nearest_neibours(
+        self, query_embedding: np.ndarray, neighbours: int = 1
+    ) -> list[dict[str, str | float]]:
+        with (
+            self.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """SELECT
+                    t.id,
+                    t.segment_id,
+                    1 - (e.embedding <=> '%s') AS cosine_similarity
+                FROM transactions t
+                LEFT JOIN embeddings e
+                    ON t.hash = e.hash
+                WHERE t.segment_id IS NOT NULL
+                ORDER BY 3 DESC
+                LIMIT %s""",
+                (str(query_embedding), neighbours),
+            )
+        return [dict(row) for row in cur.fetchall()]
 
 
 if __name__ == "__main__":

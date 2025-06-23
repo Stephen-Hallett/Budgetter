@@ -42,7 +42,7 @@ CREATE TABLE segments (
 
 -- Models table for ML models
 CREATE TABLE models (
-    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) PRIMARY KEY,
     endpoint VARCHAR(255) NOT NULL,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -83,12 +83,12 @@ CREATE TABLE assignments (
     PRIMARY KEY (user_id, hash)
 );
 
--- Classification table for ML predictions
-CREATE TABLE classification (
+-- prediction table for ML predictions
+CREATE TABLE predictions (
     user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    model SERIAL REFERENCES models(id) ON DELETE CASCADE
     hash TEXT NOT NULL,
-    segment_id INTEGER REFERENCES segments(id) ON DELETE CASCADE,
-    prediction TEXT,
+    prediction INTEGER REFERENCES segments(id) ON DELETE CASCADE,
     confidence DECIMAL(5,4),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (user_id, hash)
@@ -112,8 +112,8 @@ CREATE INDEX idx_accounts_user_id ON accounts(user_id);
 CREATE INDEX idx_segments_user_id ON segments(user_id);
 CREATE INDEX idx_assignments_user_id ON assignments(user_id);
 CREATE INDEX idx_assignments_segment_id ON assignments(segment_id);
-CREATE INDEX idx_classification_user_id ON classification(user_id);
-CREATE INDEX idx_classification_segment_id ON classification(segment_id);
+CREATE INDEX idx_prediction_user_id ON predictions(user_id);
+CREATE INDEX idx_prediction_segment_id ON predictions(prediction);
 
 -- Vector similarity search indexes
 -- HNSW index for fast approximate similarity search

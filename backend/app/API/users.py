@@ -1,14 +1,19 @@
+import logging
+
+import pytz
 import requests
 
+from database.db import BudgetterDB
+
 from ..schemas.users import CreateUser, User
-from ..utils.db import BudgetterDB
 from ..utils.logger import MyLogger, log
 
 
 class Controller:
     def __init__(self) -> None:
-        self.logger = MyLogger().get_logger()
-        self.db = BudgetterDB()
+        self.logger: logging.Logger = MyLogger().get_logger()
+        self.tz: pytz.BaseTzInfo = pytz.timezone("Pacific/Auckland")
+        self.db: BudgetterDB = BudgetterDB()
 
     @log
     def create_user(self, new_user: CreateUser) -> User:
