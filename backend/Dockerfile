@@ -1,6 +1,9 @@
 # hadolint ignore=DL3007
 FROM ghcr.io/astral-sh/uv:latest 
 
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY backend/app /app
