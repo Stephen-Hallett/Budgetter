@@ -34,17 +34,22 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PW}
+      POSTGRES_PW: ${POSTGRES_PW}
       POSTGRES_HOST: postgres.container_name
       POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
       - "${BACKEND_PORT}:8000"
+    restart: always
     healthcheck:
-      test: curl --fail http://localhost:8000/health || exit 1
-      interval: 2s
+      test:
+        [
+          "CMD-SHELL",
+          'python -c ''import sys,urllib.request; sys.exit(0) if urllib.request.urlopen("http://localhost:8000/health").status==200 else sys.exit(1)''',
+        ]
+      interval: 30s
       timeout: 5s
-      retries: 3
-      start_period: 5s
+      retries: 10
+      start_period: 60s
     networks:
       - transaction_network
 
@@ -59,7 +64,7 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PW}
+      POSTGRES_PW: ${POSTGRES_PW}
       POSTGRES_HOST: postgres.container_name
       POSTGRES_PORT: ${POSTGRES_PORT}
       MODELS_PORT: ${MODELS_PORT}

@@ -1,15 +1,15 @@
 # hadolint ignore=DL3007
-FROM ghcr.io/astral-sh/uv:latest 
+FROM python:3.13-slim-bookworm
 
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+WORKDIR /
 
-WORKDIR /app
-
-COPY backend/app /app
-COPY backend/uv.lock backend/pyproject.toml /app/
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY backend/app app
+COPY backend/uv.lock .
+COPY backend/pyproject.toml .
 COPY database /database
 
-RUN uv pip install --system --no-deps
+RUN uv sync --frozen
 
-CMD ["uv", "run", "uvicorn", "app.__init__:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uv", "run", "fastapi", "run","app", "--port", "8000"]

@@ -7,6 +7,9 @@ from .transactions import Transaction
 class PredictionInput(Transaction):
     embedding: np.ndarray
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 class Prediction(BaseModel):
     user_id: str

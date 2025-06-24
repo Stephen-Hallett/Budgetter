@@ -1,11 +1,14 @@
 # hadolint ignore=DL3007
-FROM ghcr.io/astral-sh/uv:latest 
+FROM python:3.13-slim-bookworm
 
-WORKDIR /models
+WORKDIR /
 
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY models /models
+COPY models/uv.lock .
+COPY models/pyproject.toml .
 COPY database /database
 
-RUN uv pip install --system --no-deps
+RUN uv sync --frozen
 
-CMD ["uv", "pip", "run", "python", "-m", "models"]
+CMD ["uv", "run", "python", "-m", "models"]
