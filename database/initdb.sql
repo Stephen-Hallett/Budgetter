@@ -43,7 +43,6 @@ CREATE TABLE segments (
 -- Models table for ML models
 CREATE TABLE models (
     name VARCHAR(255) PRIMARY KEY,
-    endpoint VARCHAR(255) NOT NULL,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
