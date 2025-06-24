@@ -2,8 +2,7 @@ from collections import Counter
 
 import litserve as ls
 
-from backend.app.schemas.transactions import Transaction
-from backend.app.schemas.predictions
+from backend.app.schemas.predictions import Prediction, PredictionInput
 from database.db import BudgetterDB
 
 
@@ -14,16 +13,16 @@ class VotingNN(ls.LitAPI):
         self.neighbours = neighbours
         self.name = "1nn"
 
-    def decode_request(self, request: dict[str, dict]) -> Transaction:
-        return Transaction.model_validate(request["input"])
+    def decode_request(self, request: dict[str, dict]) -> PredictionInput:
+        return PredictionInput.model_validate(request["input"])
 
-    def predict(self, transaction: Transaction) -> dict[str, str | float]:
+    def predict(self, transaction: PredictionInput) -> Prediction:
         results = self.db.find_nearest_neibours(
             query_embedding=transaction["embedding"], neighbours=self.neighbours
         )
         segment_counts = Counter(result["segment_id"] for result in results)
         segment = segment_counts.most_common(1)[0]
-        prediction = Prediction(
+        return Prediction(
             user_id=transaction["user_id"],
             model=self.name,
             hash=transaction["hash"],
@@ -31,7 +30,5 @@ class VotingNN(ls.LitAPI):
             confidence=segment[1] / self.neighbours,
         )
 
-        return prediction
-
-    def encode_response(self, output: Prediction):
-        return output.model_dump_json()
+    def encode_response(self, output: Prediction) -> dict[str, str | float]:
+        return output.model_dump()

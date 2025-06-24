@@ -7,6 +7,7 @@ class Transaction(BaseModel):
     id: str = Field(validation_alias=AliasChoices("id", "_id"))
     account: str = Field(validation_alias=AliasChoices("account", "_account"))
     user_id: str = Field(validation_alias=AliasChoices("user_id", "_user"))
+    hash: str
     date: datetime
     type: str
     amount: float
