@@ -8,7 +8,7 @@ from psycopg2.extras import RealDictCursor
 from sentence_transformers import SentenceTransformer
 
 from .schemas.accounts import Account
-from .schemas.segments import Segment
+from .schemas.segments import CreateSegment, Segment
 from .schemas.transactions import Transaction
 from .schemas.users import User
 
@@ -178,6 +178,32 @@ class BudgetterDB:
                 return [Transaction(**dict(row)) for row in cur.fetchall()]
             except Exception as e:
                 raise e
+
+    def create_segment(self, new_segment: CreateSegment) -> None:
+        """Insert a segment."""
+        with self.get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                    INSERT INTO segments (user_id, name, colour)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id, name) DO NOTHING,
+                """,
+                (new_segment.user_id, new_segment.name, new_segment.colour),
+            )
+            conn.commit()
+
+    def update_segment(self, segment: Segment) -> None:
+        """Update a segment."""
+        with self.get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                    UPDATE segments
+                    SET user_id = %s, name = %s, colour = %s
+                    WHERE id = %s
+                """,
+                (segment.user_id, segment.name, segment.colour, segment.id),
+            )
+            conn.commit()
 
     def list_segments(self) -> list[Segment]:
         with (
