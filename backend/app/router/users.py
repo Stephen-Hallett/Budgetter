@@ -1,9 +1,10 @@
 from fastapi import APIRouter, BackgroundTasks
 
+from database.schemas.users import CreateUser, User
+
 from ..API.accounts import Controller as AccountsController
 from ..API.transactions import Controller as TransactionsController
 from ..API.users import Controller
-from ..schemas.users import CreateUser, User
 from ..utils.logger import MyLogger
 
 router = APIRouter()

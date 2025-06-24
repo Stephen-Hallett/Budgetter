@@ -4,9 +4,9 @@ import pytz
 import requests
 
 from database.db import BudgetterDB
+from database.schemas.accounts import Account
+from database.schemas.users import User
 
-from ..schemas.accounts import Account
-from ..schemas.users import User
 from ..utils.logger import MyLogger, log
 
 

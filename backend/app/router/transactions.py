@@ -2,9 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Header
 
+from database.schemas.transactions import Transaction
+
 from ..API.transactions import Controller
 from ..API.users import Controller as UserController
-from ..schemas.transactions import Transaction
 from ..utils.logger import MyLogger
 
 router = APIRouter()

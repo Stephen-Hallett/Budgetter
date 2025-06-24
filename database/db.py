@@ -7,10 +7,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from sentence_transformers import SentenceTransformer
 
-from backend.app.schemas.accounts import Account
-from backend.app.schemas.segments import Segment
-from backend.app.schemas.transactions import Transaction
-from backend.app.schemas.users import User
+from .schemas.accounts import Account
+from .schemas.segments import Segment
+from .schemas.transactions import Transaction
+from .schemas.users import User
 
 
 class BudgetterDB:

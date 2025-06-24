@@ -4,8 +4,8 @@ import pytz
 import requests
 
 from database.db import BudgetterDB
+from database.schemas.users import CreateUser, User
 
-from ..schemas.users import CreateUser, User
 from ..utils.logger import MyLogger, log
 
 

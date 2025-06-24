@@ -2,8 +2,8 @@ from collections import Counter
 
 import litserve as ls
 
-from backend.app.schemas.predictions import Prediction, PredictionInput
 from database.db import BudgetterDB
+from database.schemas.predictions import Prediction, PredictionInput
 
 
 # define the api to include any number of models, dbs, etc...
