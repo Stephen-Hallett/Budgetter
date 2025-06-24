@@ -42,6 +42,26 @@ services:
     networks:
       - transaction_network
 
+  models:
+    build:
+      context: .
+      dockerfile: models/Dockerfile
+    container_name: models
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PW}
+      POSTGRES_HOST: postgres.container_name
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      MODELS_PORT: ${MODELS_PORT}
+    ports:
+      - "${MODELS_PORT}:${MODELS_PORT}"
+    networks:
+      - transaction_network
+
 volumes:
   postgres_data:
     driver: local
