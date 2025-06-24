@@ -21,3 +21,8 @@ logger = MyLogger().get_logger()
 app.include_router(AccountRouter, prefix="/accounts")
 app.include_router(TransactionRouter, prefix="/transactions")
 app.include_router(UserRouter, prefix="/users")
+
+
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {"status": "healthy"}

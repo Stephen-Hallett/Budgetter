@@ -39,6 +39,12 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
       - "${BACKEND_PORT}:8000"
+    healthcheck:
+      test: curl --fail http://localhost:8000/health || exit 1
+      interval: 2s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     networks:
       - transaction_network
 
