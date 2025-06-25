@@ -34,11 +34,15 @@ class Controller:
                 headers=headers,
                 timeout=5,
             ).json()["items"]
-            for transaction in account_transactions:
+            for (
+                transaction
+            ) in account_transactions:  # TODO Turn this into batch process
                 transaction["date"] = datetime.strptime(
                     transaction["date"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 ).replace(tzinfo=self.tz)
-                self.db.transactions.create_transaction(Transaction.model_validate(transaction))
+                self.db.transactions.create_transaction(
+                    Transaction.model_validate(transaction)
+                )
 
     def list_transactions(
         self, user: User
