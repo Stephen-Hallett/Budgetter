@@ -38,9 +38,9 @@ class Controller:
                 transaction["date"] = datetime.strptime(
                     transaction["date"], "%Y-%m-%dT%H:%M:%S.%fZ"
                 ).replace(tzinfo=self.tz)
-                self.db.create_transaction(Transaction.model_validate(transaction))
+                self.db.transactions.create_transaction(Transaction.model_validate(transaction))
 
     def list_transactions(
         self, user: User
     ) -> list[Transaction]:  # TODO: Add time limit
-        return self.db.list_transactions(user)
+        return self.db.transactions.list_transactions(user)

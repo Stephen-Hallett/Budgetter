@@ -26,7 +26,7 @@ class Controller:
             "https://api.akahu.io/v1/accounts", headers=headers, timeout=5
         ).json()
         for account in akahu_accounts["items"]:
-            self.db.upsert_account(
+            self.db.accounts.upsert_account(
                 Account.model_validate(
                     {
                         "id": account["_id"],
@@ -40,4 +40,4 @@ class Controller:
             )
 
     def list_accounts(self, user: User) -> list[Account]:
-        return self.db.list_accounts(user)
+        return self.db.accounts.list_accounts(user)
