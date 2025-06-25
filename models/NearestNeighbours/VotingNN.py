@@ -17,7 +17,7 @@ class VotingNN(ls.LitAPI):
         return PredictionInput.model_validate(request["input"])
 
     def predict(self, transaction: PredictionInput) -> Prediction:
-        results = self.db.find_nearest_neibours(
+        results = self.db.predictions.find_nearest_neibours(
             query_embedding=transaction["embedding"], neighbours=self.neighbours
         )
         segment_counts = Counter(result["segment_id"] for result in results)
