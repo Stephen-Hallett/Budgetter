@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .router.accounts import router as AccountRouter
+from .router.models import router as ModelRouter
 from .router.transactions import router as TransactionRouter
 from .router.users import router as UserRouter
 from .utils.logger import MyLogger
@@ -21,6 +22,7 @@ logger = MyLogger().get_logger()
 app.include_router(AccountRouter, prefix="/accounts")
 app.include_router(TransactionRouter, prefix="/transactions")
 app.include_router(UserRouter, prefix="/users")
+app.include_router(ModelRouter, prefix="/models")
 
 
 @app.get("/health")

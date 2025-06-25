@@ -1,3 +1,6 @@
+import os
+
+import requests
 from psycopg2.extras import RealDictCursor
 
 from ..schemas.transactions import Transaction
@@ -49,8 +52,16 @@ class Transactions:
                 """,
                 (text_hash, embedding.tolist()),
             )
-
             conn.commit()
+
+        model_names = self.db.models.list_models()
+        predictive_info = self.db.predictions.get_prediction_input(transaction.id)
+        for model in model_names:
+            _ = requests.post(
+                f"http://models:{os.environ['MODELS_PORT']}/{model.name}",
+                json={"input": predictive_info.model_dump(mode="json")},
+                timeout=10,
+            )
 
         return text_hash
 
