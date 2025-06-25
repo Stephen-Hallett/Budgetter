@@ -33,7 +33,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PW: ${POSTGRES_PW}
-      POSTGRES_HOST: postgres.container_name
+      POSTGRES_HOST: ${POSTGRES_DB}
       POSTGRES_PORT: ${POSTGRES_PORT}
     ports:
       - "${BACKEND_PORT}:8000"
@@ -63,7 +63,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PW: ${POSTGRES_PW}
-      POSTGRES_HOST: postgres.container_name
+      POSTGRES_HOST: ${POSTGRES_DB}
       POSTGRES_PORT: ${POSTGRES_PORT}
       MODELS_PORT: ${MODELS_PORT}
     ports:
