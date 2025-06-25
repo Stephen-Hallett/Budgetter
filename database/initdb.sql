@@ -85,7 +85,7 @@ CREATE TABLE assignments (
 -- prediction table for ML predictions
 CREATE TABLE predictions (
     user_id user_id_type NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    model SERIAL REFERENCES models(id) ON DELETE CASCADE
+    model VARCHAR(255) REFERENCES models(name) ON DELETE CASCADE,
     hash TEXT NOT NULL,
     prediction INTEGER REFERENCES segments(id) ON DELETE CASCADE,
     confidence DECIMAL(5,4),
