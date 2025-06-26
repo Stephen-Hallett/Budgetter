@@ -18,9 +18,21 @@ class Segments:
                     INSERT INTO segments (user_id, name, colour, hash)
                     VALUES (%s, %s, %s, %s)
                     ON CONFLICT (user_id, name) DO NOTHING
+                    RETURNING id
                 """,
                 (user.id, new_segment.name, new_segment.colour, text_hash),
             )
+            row = cur.fetchone()
+            if row is not None:
+                segment_id = row[0]
+            else:
+                # If conflict, fetch the existing segment's id
+                cur.execute(
+                    "SELECT id FROM segments WHERE user_id = %s AND name = %s",
+                    (user.id, new_segment.name),
+                )
+                segment_id = cur.fetchone()[0]
+
             cur.execute(
                 """
                     INSERT INTO embeddings (hash, embedding)
@@ -31,8 +43,8 @@ class Segments:
             )
             conn.commit()
         return Segment(
-            **new_segment.model_dump(), hash=text_hash
-        )  # TODO: This doesnt have access to the new id value, or the user id yet
+            id=segment_id, user_id=user.id, hash=text_hash, **new_segment.model_dump()
+        )
 
     def update_segment(self, segment: Segment) -> Segment:
         """Update a segment."""

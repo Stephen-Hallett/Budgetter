@@ -30,7 +30,7 @@ class Predictions:
             self.db.get_connection() as conn,
             conn.cursor(cursor_factory=RealDictCursor) as cur,
         ):
-            cur.execute(
+            cur.execute(  # TODO Should be on assignments not on transactions
                 """SELECT
                     t.id,
                     t.segment_id,

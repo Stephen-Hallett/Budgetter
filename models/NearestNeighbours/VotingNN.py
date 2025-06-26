@@ -29,14 +29,23 @@ class VotingNN(ls.LitAPI):
             query_embedding=transaction.embedding, neighbours=self.neighbours
         )
         segment_counts = Counter(result["segment_id"] for result in results)
-        segment = segment_counts.most_common(1)[0]
-        return Prediction(
-            user_id=transaction.user_id,
-            model=self.name,
-            hash=transaction.hash,
-            prediction=segment[0],
-            confidence=segment[1] / self.neighbours,
-        )
+        try:
+            segment = segment_counts.most_common(1)[0]
+            return Prediction(
+                user_id=transaction.user_id,
+                model=self.name,
+                hash=transaction.hash,
+                prediction=segment[0],
+                confidence=segment[1] / self.neighbours,
+            )
+        except IndexError:
+            return Prediction(
+                user_id=transaction.user_id,
+                model=self.name,
+                hash=transaction.hash,
+                prediction=None,
+                confidence=0.0,
+            )
 
     def encode_response(self, output: Prediction) -> dict[str, str | float]:
         response = output.model_dump()
