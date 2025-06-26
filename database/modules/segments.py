@@ -1,47 +1,74 @@
 from psycopg2.extras import RealDictCursor
 
 from ..schemas.segments import CreateSegment, Segment
+from ..schemas.users import User
 
 
 class Segments:
     def __init__(self, db) -> None:
         self.db = db
 
-    def create_segment(self, new_segment: CreateSegment) -> None:
+    def create_segment(self, new_segment: CreateSegment, user: User) -> Segment:
         """Insert a segment."""
+        text_hash = self.db.create_text_hash(new_segment.name)
+        embedding = self.db.generate_embedding(new_segment.name)
         with self.db.get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
-                    INSERT INTO segments (user_id, name, colour)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (user_id, name) DO NOTHING,
+                    INSERT INTO segments (user_id, name, colour, hash)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (user_id, name) DO NOTHING
                 """,
-                (new_segment.user_id, new_segment.name, new_segment.colour),
+                (user.id, new_segment.name, new_segment.colour, text_hash),
+            )
+            cur.execute(
+                """
+                    INSERT INTO embeddings (hash, embedding)
+                    VALUES (%s, %s)
+                    ON CONFLICT (hash) DO NOTHING
+                """,
+                (text_hash, embedding.tolist()),
             )
             conn.commit()
+        return Segment(
+            **new_segment.model_dump(), hash=text_hash
+        )  # TODO: This doesnt have access to the new id value, or the user id yet
 
-    def update_segment(self, segment: Segment) -> None:
+    def update_segment(self, segment: Segment) -> Segment:
         """Update a segment."""
+        text_hash = self.db.create_text_hash(segment.name)
+        segment.hash = text_hash
+        embedding = self.db.generate_embedding(segment.name)
         with self.db.get_connection() as conn, conn.cursor() as cur:
             cur.execute(
                 """
                     UPDATE segments
-                    SET user_id = %s, name = %s, colour = %s
+                    SET name = %s, colour = %s, hash = %s
                     WHERE id = %s
                 """,
-                (segment.user_id, segment.name, segment.colour, segment.id),
+                (segment.name, segment.colour, text_hash, segment.id),
+            )
+            cur.execute(
+                """
+                    INSERT INTO embeddings (hash, embedding)
+                    VALUES (%s, %s)
+                    ON CONFLICT (hash) DO NOTHING
+                """,
+                (text_hash, embedding.tolist()),
             )
             conn.commit()
+        return segment
 
-    def list_segments(self) -> list[Segment]:
+    def list_segments(self, user: User) -> list[Segment]:
         with (
             self.db.get_connection() as conn,
             conn.cursor(cursor_factory=RealDictCursor) as cur,
         ):
             cur.execute(
                 """
-                    SELECT * FROM segments
-                """
+                    SELECT * FROM segments WHERE user_id = %s
+                """,
+                (user.id,),
             )
             try:
                 return [Segment(**dict(row)) for row in cur.fetchall()]

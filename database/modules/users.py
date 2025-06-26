@@ -9,7 +9,7 @@ class Users:
 
     def get_user(self, name: str) -> User:
         with (
-            self.db.et_connection() as conn,
+            self.db.get_connection() as conn,
             conn.cursor(cursor_factory=RealDictCursor) as cur,
         ):
             cur.execute(

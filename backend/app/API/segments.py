@@ -16,8 +16,14 @@ class Controller:
         self.db = BudgetterDB()
 
     @log
-    def create_segment(self, new_segment: CreateSegment) -> None:
-        self.db.segments.create_segment(new_segment)
+    def create_segment(self, new_segment: CreateSegment, user: User) -> Segment:
+        self.db.segments.create_segment(new_segment, user)
+
+    def create_default_segments(self, user: User) -> None:
+        names = ("Income", "Food & Drink", "Lifestyle", "Household", "Subscriptions")
+        colours = ("#40a02b", "#d20f39", "#04a5e5", "#ea76cb", "#fe640b")
+        for name, colour in zip(names, colours, strict=False):
+            self.create_segment(CreateSegment(name=name, colour=colour), user)
 
     @log
     def update_segment(self, segment: Segment) -> Segment:
