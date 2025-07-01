@@ -32,15 +32,14 @@ class Predictions:
         ):
             cur.execute(  # TODO Should be on assignments not on transactions
                 """SELECT
-                    t.id,
-                    t.segment_id,
+                    a.segment_id,
                     1 - (e.embedding <=> %s::vector) AS cosine_similarity
-                FROM transactions t
+                FROM assignments a
                 LEFT JOIN embeddings e
-                    ON t.hash = e.hash
-                WHERE t.segment_id IS NOT NULL
-                ORDER BY 3 DESC
+                    ON a.hash = e.hash
+                WHERE a.segment_id IS NOT NULL
+                ORDER BY (1 - (e.embedding <=> %s::vector)) DESC
                 LIMIT %s""",
-                (query_embedding, neighbours),
+                (query_embedding, query_embedding, neighbours),
             )
             return [dict(row) for row in cur.fetchall()]

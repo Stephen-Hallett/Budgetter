@@ -41,6 +41,14 @@ class Segments:
                 """,
                 (text_hash, embedding.tolist()),
             )
+            cur.execute(
+                """
+                    INSERT INTO assignments (user_id, hash, segment_id)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id, hash) DO NOTHING
+                """,
+                (user.id, text_hash, segment_id),
+            )
             conn.commit()
         return Segment(
             id=segment_id, user_id=user.id, hash=text_hash, **new_segment.model_dump()
@@ -68,6 +76,7 @@ class Segments:
                 """,
                 (text_hash, embedding.tolist()),
             )
+
             conn.commit()
         return segment
 
