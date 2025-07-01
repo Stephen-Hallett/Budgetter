@@ -91,7 +91,7 @@ CREATE TABLE predictions (
     prediction INTEGER REFERENCES segments(id) ON DELETE CASCADE,
     confidence DECIMAL(5,4),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    PRIMARY KEY (user_id, hash)
+    PRIMARY KEY (user_id, model, hash)
 );
 
 -- Ignored transactions table

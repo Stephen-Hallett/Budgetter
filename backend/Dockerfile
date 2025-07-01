@@ -11,5 +11,4 @@ COPY database /database
 
 RUN uv sync --frozen
 
-
 CMD ["uv", "run", "fastapi", "run","app", "--port", "8000"]

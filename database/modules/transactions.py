@@ -3,6 +3,7 @@ import os
 import requests
 from psycopg2.extras import RealDictCursor
 
+from ..schemas.predictions import Prediction
 from ..schemas.transactions import Transaction
 from ..schemas.users import User
 
@@ -57,11 +58,12 @@ class Transactions:
         model_names = self.db.models.list_models()
         predictive_info = self.db.predictions.get_prediction_input(transaction.id)
         for model in model_names:
-            _ = requests.post(
+            pred = requests.post(
                 f"http://models:{os.environ['MODELS_PORT']}/{model.name}",
                 json={"input": predictive_info.model_dump(mode="json")},
                 timeout=10,
-            )
+            ).json()
+            self.db.predictions.upsert_prediction(Prediction.model_validate(pred))
 
         return text_hash
 

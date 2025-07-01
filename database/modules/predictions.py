@@ -1,6 +1,6 @@
 from psycopg2.extras import RealDictCursor
 
-from ..schemas.predictions import PredictionInput
+from ..schemas.predictions import Prediction, PredictionInput
 
 
 class Predictions:
@@ -30,7 +30,7 @@ class Predictions:
             self.db.get_connection() as conn,
             conn.cursor(cursor_factory=RealDictCursor) as cur,
         ):
-            cur.execute(  # TODO Should be on assignments not on transactions
+            cur.execute(
                 """SELECT
                     a.segment_id,
                     1 - (e.embedding <=> %s::vector) AS cosine_similarity
@@ -43,3 +43,23 @@ class Predictions:
                 (query_embedding, query_embedding, neighbours),
             )
             return [dict(row) for row in cur.fetchall()]
+
+    def upsert_prediction(self, prediction: Prediction) -> None:
+        with self.db.get_connection() as conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                    INSERT INTO predictions (user_id, model, hash, prediction, confidence)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (user_id, model, hash) DO UPDATE SET
+                        prediction = EXCLUDED.prediction,
+                        confidence = EXCLUDED.confidence
+                """,
+                (
+                    prediction.user_id,
+                    prediction.model,
+                    prediction.hash,
+                    prediction.prediction,
+                    prediction.confidence,
+                ),
+            )
+            conn.commit()
