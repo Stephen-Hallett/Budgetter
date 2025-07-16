@@ -50,23 +50,23 @@
 	];
 </script>
 
-<div class="mx-auto min-h-screen max-w-6xl rounded-[60px] border bg-white p-8">
-	<h1 class="mb-8 text-center text-4xl font-bold">Budgetter</h1>
+<div class="mx-32 flex min-h-screen flex-col p-8">
+	<h1 class="mb-8 w-full text-center text-8xl font-bold">Budgetter</h1>
 
 	<!-- Filters Bar -->
-	<Card class="mb-8 rounded-2xl">
+	<Card class="mb-8 w-full rounded-2xl">
 		<CardContent class="flex flex-wrap items-center gap-6 py-6">
 			<div class="flex items-center gap-2">
 				<span class="font-semibold">Time:</span>
-				<Select>
-					<SelectTrigger class="w-[100px]"></SelectTrigger>
+				<Select type="single">
+					<SelectTrigger class="w-[100px]">From</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="jan">Jan</SelectItem>
 						<SelectItem value="feb">Feb</SelectItem>
 						<!-- more options -->
 					</SelectContent>
 				</Select>
-				<Select>
+				<Select type="single">
 					<SelectTrigger class="w-[100px]">To</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="mar">Mar</SelectItem>
@@ -80,7 +80,7 @@
 				{#each filters as filter}
 					<Badge class="border-red-300 bg-red-100 text-red-800">{filter}</Badge>
 				{/each}
-				<Select>
+				<Select type="single">
 					<SelectTrigger class="w-[140px]">More</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="subscriptions">Subscriptions</SelectItem>
@@ -92,9 +92,9 @@
 	</Card>
 
 	<!-- Main Content -->
-	<div class="flex gap-6">
+	<div class="flex min-h-0 flex-1 gap-6">
 		<!-- Transactions List -->
-		<Card class="flex-1 rounded-3xl">
+		<Card class="flex-2 flex min-h-0 flex-col rounded-3xl">
 			<CardContent class="py-6">
 				<h2 class="mb-4 text-center text-2xl font-semibold">Transactions</h2>
 				<div class="flex flex-col gap-4">
@@ -108,7 +108,7 @@
 								<div class="font-semibold">{txn.name}</div>
 								<div class="text-sm text-gray-500">{txn.particulars}</div>
 							</div>
-							<Select>
+							<Select type="single">
 								<SelectTrigger class="w-[120px]">
 									{txn.category}
 								</SelectTrigger>
@@ -124,22 +124,23 @@
 			</CardContent>
 		</Card>
 
-		<!-- Segments / Pie / Stats -->
-		<div class="flex w-[380px] flex-col gap-6">
-			<!-- Segments -->
-			<Card class="rounded-3xl">
-				<CardContent class="py-6">
-					<h3 class="mb-4 text-lg font-semibold">Segments</h3>
-					<ul>
-						{#each segments as seg}
-							<li class="mb-2 flex items-center gap-2">
-								<span class={`inline-block h-4 w-4 rounded-full ${seg.color}`}></span>
-								<span>{seg.name} - {seg.percent} %</span>
-							</li>
-						{/each}
-					</ul>
-				</CardContent>
-			</Card>
+		<!-- Segments -->
+		<Card class="flex flex-1 rounded-3xl">
+			<CardContent class="py-6">
+				<h3 class="mb-4 text-lg font-semibold">Segments</h3>
+				<ul>
+					{#each segments as seg}
+						<li class="mb-2 flex items-center gap-2">
+							<span class={`inline-block h-4 w-4 rounded-full ${seg.color}`}></span>
+							<span>{seg.name} - {seg.percent} %</span>
+						</li>
+					{/each}
+				</ul>
+			</CardContent>
+		</Card>
+
+		<!-- Pie / Stats -->
+		<div class="flex-2 flex min-h-0 flex-shrink-0 flex-col gap-6">
 			<!-- Donut Chart (placeholder) -->
 			<Card class="flex h-60 items-center justify-center rounded-3xl">
 				<span class="text-gray-400">[Pie Chart Here]</span>
