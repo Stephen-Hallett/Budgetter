@@ -35,3 +35,20 @@ class Transaction(BaseModel):
 
     def model_dump(self, **kwargs: object) -> dict[str, str]:
         return super().model_dump(by_alias=True, **kwargs)
+
+
+class Enriched(BaseModel):
+    id: str
+    account: str
+    user_id: str
+    segment_id: str
+    hash: str
+    date: datetime
+    type: str
+    amount: float
+    description: str
+    category: str | None
+    group_name: str | None
+    merchant: str | None
+    colour: str
+    confirmed: bool
