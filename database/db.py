@@ -5,6 +5,7 @@ from .modules.base import BaseDB
 from .modules.models import Models
 from .modules.predictions import Predictions
 from .modules.segments import Segments
+from .modules.summary import Summary
 from .modules.transactions import Transactions
 from .modules.users import Users
 
@@ -18,6 +19,7 @@ class BudgetterDB(BaseDB):
         self.predictions = Predictions(self)
         self.segments = Segments(self)
         self.transactions = Transactions(self)
+        self.summary = Summary(self)
 
 
 if __name__ == "__main__":
