@@ -7,7 +7,7 @@ class Transaction(BaseModel):
     id: str
     account: str
     user_id: str
-    segment_id: str
+    segment_id: int
     hash: str
     date: datetime
     type: str
