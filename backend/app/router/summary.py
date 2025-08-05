@@ -21,6 +21,10 @@ async def transactions(
     username: Annotated[str, Header()],
     start_date: date | None = None,
     end_date: date | None = None,
+    limit: int | None = None,
+    offset: int = 0,
 ) -> list[Transaction]:
     user = user_con.get_user(username)
-    return con.list_transactions(user=user, start_date=start_date, end_date=end_date)
+    return con.list_transactions(
+        user=user, start_date=start_date, end_date=end_date, limit=limit, offset=offset
+    )

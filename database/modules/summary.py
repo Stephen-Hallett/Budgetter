@@ -19,11 +19,15 @@ class Summary:
         user: User,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[Transaction]:
         if start_date is None:
             start_date = datetime.now(self.tz).replace(year=1).date()
         if end_date is None:
             end_date = datetime.now(self.tz).date()
+        if limit is None:
+            limit = 1e7  # This is just a small scale app so this hacky fix will do
 
         with (
             self.db.get_connection() as conn,
@@ -57,11 +61,13 @@ class Summary:
                     LEFT JOIN segments s
                         ON t.user_id = s.user_id AND COALESCE(a.segment_id, p.prediction) = s.id
                     WHERE t.user_id = %s AND t.date >= %s AND t.date <= %s
+                    ORDER BY t.date DESC
+                    LIMIT %s
+                    OFFSET %s
                 """,  # TODO: This will make duplicates when there is > 1 model
-                (user.id, start_date, end_date),
+                (user.id, start_date, end_date, limit, offset),
             )
             try:
                 return [Transaction(**dict(row)) for row in cur.fetchall()]
             except Exception as e:
                 raise e
-

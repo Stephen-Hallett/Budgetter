@@ -24,6 +24,8 @@ def set_state() -> None:
             headers={"username": st.session_state.username},
             timeout=5,
         ).json()
+    if "trans_limit" not in st.session_state:
+        st.session_state.trans_limit = 20
 
 
 def main() -> None:
@@ -51,6 +53,12 @@ def main() -> None:
     trans_col, seg_col, plot_col = st.columns([3, 1, 2])
     with trans_col, st.container(border=True):
         st.subheader("Transactions")
+        transactions = requests.get(
+            f"{os.environ['HOST']}/summary/transactions?limit={st.session_state.trans_limit}",
+            headers={"username": st.session_state.username},
+            timeout=5,
+        ).json()
+        st.write(transactions)
 
     with seg_col, st.container(border=True):
         st.subheader("Segments")

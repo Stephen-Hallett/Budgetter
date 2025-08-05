@@ -23,7 +23,13 @@ class Controller:
         user: User,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
+        limit: int | None = None,
+        offset: int = 0,
     ) -> list[Transaction]:
         return self.db.summary.list_transactions(
-            user=user, start_date=start_date, end_date=end_date
+            user=user,
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+            offset=offset,
         )
