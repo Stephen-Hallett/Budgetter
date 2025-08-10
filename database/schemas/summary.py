@@ -8,6 +8,7 @@ class Transaction(BaseModel):
     account: str
     user_id: str
     segment_id: int
+    segment: str
     hash: str
     date: datetime
     type: str

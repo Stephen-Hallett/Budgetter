@@ -35,35 +35,45 @@ class Summary:
         ):
             cur.execute(
                 """
+                    WITH big_table AS (
+                        SELECT
+                            t.id,
+                            t.account,
+                            t.user_id,
+                            COALESCE(a.segment_id, p.prediction) AS segment_id,
+                            t.hash,
+                            t.date,
+                            t.type,
+                            t.amount,
+                            t.description,
+                            t.category,
+                            t.group_name,
+                            t.merchant,
+                            s.colour,
+                            CASE WHEN a.segment_id IS NULL
+                                THEN false
+                                ELSE true
+                            END AS confirmed
+                        FROM transactions t
+                        LEFT JOIN assignments a
+                            ON t.user_id = a.user_id AND t.hash = a.hash
+                        LEFT JOIN predictions p
+                            ON t.user_id = p.user_id AND t.hash = p.hash
+                        LEFT JOIN segments s
+                            ON t.user_id = s.user_id
+                            AND COALESCE(a.segment_id, p.prediction) = s.id
+                        WHERE t.user_id = %s AND t.date >= %s AND t.date <= %s
+                        ORDER BY t.date DESC
+                        LIMIT %s
+                        OFFSET %s
+                    )
+
                     SELECT
-                        t.id,
-                        t.account,
-                        t.user_id,
-                        COALESCE(a.segment_id, p.prediction) AS segment_id,
-                        t.hash,
-                        t.date,
-                        t.type,
-                        t.amount,
-                        t.description,
-                        t.category,
-                        t.group_name,
-                        t.merchant,
-                        s.colour,
-                        CASE WHEN a.segment_id IS NULL
-                            THEN false
-                            ELSE true
-                        END AS confirmed
-                    FROM transactions t
-                    LEFT JOIN assignments a
-                        ON t.user_id = a.user_id AND t.hash = a.hash
-                    LEFT JOIN predictions p
-                        ON t.user_id = p.user_id AND t.hash = p.hash
+                        b.*,
+                        s.name AS segment
+                    FROM big_table b
                     LEFT JOIN segments s
-                        ON t.user_id = s.user_id AND COALESCE(a.segment_id, p.prediction) = s.id
-                    WHERE t.user_id = %s AND t.date >= %s AND t.date <= %s
-                    ORDER BY t.date DESC
-                    LIMIT %s
-                    OFFSET %s
+                        ON b.user_id = s.user_id AND b.segment_id = s.id
                 """,  # TODO: This will make duplicates when there is > 1 model
                 (user.id, start_date, end_date, limit, offset),
             )
