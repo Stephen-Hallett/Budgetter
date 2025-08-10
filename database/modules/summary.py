@@ -63,9 +63,6 @@ class Summary:
                             ON t.user_id = s.user_id
                             AND COALESCE(a.segment_id, p.prediction) = s.id
                         WHERE t.user_id = %s AND t.date >= %s AND t.date <= %s
-                        ORDER BY t.date DESC
-                        LIMIT %s
-                        OFFSET %s
                     )
 
                     SELECT
@@ -74,6 +71,9 @@ class Summary:
                     FROM big_table b
                     LEFT JOIN segments s
                         ON b.user_id = s.user_id AND b.segment_id = s.id
+                    ORDER BY b.date DESC
+                    LIMIT %s
+                    OFFSET %s
                 """,  # TODO: This will make duplicates when there is > 1 model
                 (user.id, start_date, end_date, limit, offset),
             )
