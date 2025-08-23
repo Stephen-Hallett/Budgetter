@@ -19,6 +19,7 @@ class Controller:
     def create_segment(self, new_segment: CreateSegment, user: User) -> Segment:
         self.db.segments.create_segment(new_segment, user)
 
+    @log
     def create_default_segments(self, user: User) -> None:
         names = ("Income", "Food & Drink", "Lifestyle", "Household", "Subscriptions")
         colours = ("#40a02b", "#d20f39", "#04a5e5", "#ea76cb", "#fe640b")
@@ -32,3 +33,7 @@ class Controller:
     @log
     def list_segments(self, user: User) -> list[Segment]:
         return self.db.segments.list_segments(user)
+
+    @log
+    def get_segment(self, segment_id: int, user: User) -> Segment:
+        self.db.segments.get_segment(segment_id, user)

@@ -27,3 +27,8 @@ async def create_segment(
 ) -> Segment:
     user = user_con.get_user(username)
     return con.create_segment(segment, user)
+
+
+@router.put("/update")
+async def update_segment(segment: Segment) -> Segment:
+    return con.update_segment(segment)

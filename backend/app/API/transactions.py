@@ -29,20 +29,22 @@ class Controller:
         }
         accounts = acc_con.list_accounts(user)
         for account in accounts:
-            account_transactions = requests.get(
+            account_transactions_res = requests.get(
                 f"https://api.akahu.io/v1/accounts/{account.id}/transactions",
                 headers=headers,
-                timeout=5,
-            ).json()["items"]
-            for (
-                transaction
-            ) in account_transactions:  # TODO Turn this into batch process
-                transaction["date"] = datetime.strptime(
-                    transaction["date"], "%Y-%m-%dT%H:%M:%S.%fZ"
-                ).replace(tzinfo=self.tz)
-                self.db.transactions.create_transaction(
-                    Transaction.model_validate(transaction)
-                )
+                timeout=15,
+            ).json()
+            if account_transactions_res.get("success", False):
+                account_transactions = account_transactions_res["items"]
+                for (
+                    transaction
+                ) in account_transactions:  # TODO Turn this into batch process
+                    transaction["date"] = datetime.strptime(
+                        transaction["date"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                    ).replace(tzinfo=self.tz)
+                    self.db.transactions.create_transaction(
+                        Transaction.model_validate(transaction)
+                    )
 
     def list_transactions(
         self, user: User
