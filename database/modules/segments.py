@@ -1,6 +1,6 @@
 from psycopg2.extras import RealDictCursor
 
-from ..schemas.segments import CreateSegment, Segment
+from ..schemas.segments import CreateSegment, Segment, UpdateSegment
 from ..schemas.users import User
 
 
@@ -64,9 +64,9 @@ class Segments:
                 """
                     UPDATE segments
                     SET name = %s, colour = %s, hash = %s
-                    WHERE id = %s
+                    WHERE id = %s AND user_id = %s
                 """,
-                (segment.name, segment.colour, text_hash, segment.id),
+                (segment.name, segment.colour, text_hash, segment.id, segment.user_id),
             )
             cur.execute(
                 """
@@ -93,5 +93,21 @@ class Segments:
             )
             try:
                 return [Segment(**dict(row)) for row in cur.fetchall()]
+            except Exception as e:
+                raise e
+
+    def get_segment(self, segment_id: int, user: User) -> Segment:
+        with (
+            self.db.get_connection() as conn,
+            conn.cursor(cursor_factory=RealDictCursor) as cur,
+        ):
+            cur.execute(
+                """
+                    SELECT * FROM segments WHERE user_id = %s AND id = %s
+                """,
+                (user.id, segment_id),
+            )
+            try:
+                return Segment.model_validate(next(dict(row) for row in cur.fetchall()))
             except Exception as e:
                 raise e

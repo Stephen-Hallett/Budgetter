@@ -12,3 +12,8 @@ class Segment(BaseModel):
 class CreateSegment(BaseModel):
     name: str
     colour: str
+
+
+class UpdateSegment(BaseModel):
+    name: str
+    colour: str

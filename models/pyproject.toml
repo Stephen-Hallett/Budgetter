@@ -8,5 +8,6 @@ dependencies = [
     "pydantic>=2.10.5",
     "pydantic-settings>=2.9.1",
     "numpy>=2.3.0",
+    "pytz>=2025.2",
     "sentence-transformers>=4.1.0",
 ]
