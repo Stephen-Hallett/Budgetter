@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+import plotly.express as px
+import polars as pl
 import pytz
 import requests
 import streamlit as st
@@ -147,9 +149,55 @@ def main() -> None:
                     st.markdown(f"\n\n#### {segment['name']}")
 
     with plot_col, st.container():
-        metric1, metric2 = st.columns(2)
-        metric1.metric("You Spent", "$69.00", border=True)
-        metric2.metric("Of Monthly Income", "12.0%", border=True)
+        transactions_df = pl.DataFrame(transactions)
+        outgoing = transactions_df.filter(pl.col("amount") < 0)
+        incoming = transactions_df.filter(pl.col("amount") > 0)
+        spend = outgoing["amount"].sum() * -1
+        income = incoming["amount"].sum()
+        segmented = outgoing.group_by("segment", "colour").agg(
+            pl.col("amount").sum() * -1
+        )
+        segmented_pd = segmented.to_pandas()
+        segmented_pd["amount"] = segmented_pd["amount"].astype(float).fillna(0)
+
+        fig = px.pie(
+            segmented_pd,
+            values="amount",
+            names="segment",
+            color="segment",
+            color_discrete_map={
+                row["segment"]: row["colour"] for _, row in segmented_pd.iterrows()
+            },
+            hole=0.4,  # 0 for pie, >0 for donut
+            hover_data=["amount"],
+            height=800,
+        )
+        fig.update_traces(
+            hovertemplate="<b>%{label}</b><br>Spend: $%{value:.2f}<br>Percent: %{percent}<extra></extra>",
+            textinfo="percent",
+            textfont_size=24,  # Make text inside the donut larger
+        )
+        fig.update_layout(
+            margin={"t": 0, "b": 0, "l": 0, "r": 0},
+            legend={
+                "font": {"size": 30},
+                "orientation": "h",  # Horizontal legend
+                "yanchor": "bottom",
+                "y": -0.15,  # Move legend below the chart
+                "xanchor": "center",
+                "x": 0.5,
+            },
+            hoverlabel={"font_size": 20},
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        metric1, metric2, metric3 = st.columns(3)
+        metric1.metric("You Spent", f"${spend:.2f}", border=True)
+        metric2.metric("You Earnt", f"${income:.2f}", border=True)
+        metric3.metric(
+            "Spending as a % of Income", f"{100 * spend / income:.2f}%", border=True
+        )
 
 
 if __name__ == "__main__":
